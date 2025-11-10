@@ -1,29 +1,21 @@
 const mysql = require('mysql2');
 const dbConfig = require('../config/db.config');
 
-// Crear conexión con la base de datos
-const connection = mysql.createConnection({
+// Crear pool de conexiones
+const pool = mysql.createPool({
   host: dbConfig.HOST,
   user: dbConfig.USER,
   password: dbConfig.PASSWORD,
   database: dbConfig.DB,
-  port: dbConfig.port,
-  connectTimeout: 60000  // 60 segundos de timeout
+  port: dbConfig.port || 8889,
+  waitForConnections: true,
+  connectionLimit: 10,  // ajusta según la carga real
+  queueLimit: 0
 });
 
-// Abrir la conexión MySQL
-connection.connect(error => {
-  if (error) {
-    console.error('Error al conectar a la base de datos:');
-    console.error('Host:', dbConfig.HOST);
-    console.error('User:', dbConfig.USER);
-    console.error('Database:', dbConfig.DB);
-    console.error('Port:', dbConfig.port);
-    console.error('Error:', error.message);
-    throw error;
-  }
-  console.log('✅ Conexión a la base de datos establecida con éxito.');
-  console.log(`📦 Conectado a: ${dbConfig.HOST}:${dbConfig.port}/${dbConfig.DB}`);
+pool.on('error', err => {
+  console.error('MySQL Pool Error:', err);
+  // Aquí podrías intentar recuperar el pool si lo creas programáticamente
 });
 
-module.exports = connection;
+module.exports = pool;
